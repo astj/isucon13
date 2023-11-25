@@ -18,12 +18,10 @@ func getEnv(key string, fallback string) string {
 
 func connectRedis(logger echo.Logger) *redis.Client {
 	redisAddr := getEnv("REDIS_ADDR", "localhost:6379")
-	redisPassword := getEnv("REDIS_PASS", "isucon")
 	redisDB, _ := strconv.Atoi(getEnv("REDIS_DB", "0"))
 	return redis.NewClient(&redis.Options{
-		Addr:     redisAddr,
-		Password: redisPassword,
-		DB:       int(redisDB),
+		Addr: redisAddr,
+		DB:   int(redisDB),
 	})
 }
 
