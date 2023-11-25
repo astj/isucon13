@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"time"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
 	"github.com/gorilla/sessions"
 	"github.com/jmoiron/sqlx"
@@ -101,9 +102,9 @@ func getIconHandler(c echo.Context) error {
 	username := c.Param("username")
 
 	if reqHash := c.Request().Header.Get("If-None-Match"); reqHash != "" {
-		var iconHash string
-		if err := dbConn.GetContext(ctx, &iconHash, "SELECT sha256 FROM icons WHERE user_name = ?", username); err != nil {
-			if !errors.Is(err, sql.ErrNoRows) {
+		iconHash, err := getUserIconSha256(ctx, username)
+		if err != nil {
+			if !errors.Is(err, redis.Nil) {
 				return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user icon: "+err.Error())
 			}
 		}
@@ -168,6 +169,9 @@ func postIconHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit: "+err.Error())
 	}
 
+	if err := setUserIconSha256(ctx, userName, iconHash); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to store new user icon: "+err.Error())
+	}
 	return c.JSON(http.StatusCreated, &PostIconResponse{
 		ID: iconID,
 	})
@@ -417,9 +421,9 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 		return User{}, err
 	}
 
-	var iconHash string
-	if err := tx.GetContext(ctx, &iconHash, "SELECT sha256 FROM icons WHERE user_name = ?", userModel.Name); err != nil {
-		if !errors.Is(err, sql.ErrNoRows) {
+	iconHash, err := getUserIconSha256(ctx, userModel.Name)
+	if err != nil {
+		if !errors.Is(err, redis.Nil) {
 			return User{}, err
 		}
 		iconHash = fallbackImageHash
