@@ -1,5 +1,7 @@
 set -xue
 
+# sudo ~/webapp/deploy.sh
+
 cd /home/isucon/webapp/go
 sudo -u isucon git pull origin main
 systemctl stop isupipe-go.service
