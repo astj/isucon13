@@ -85,7 +85,8 @@ mysql -u"$ISUCON_DB_USER" \
 
 
 ## redis を初期化する
-redis-client -h "$REDIS_ADDR" -n "$REDIS_DB" "FLUSHDB"
+REDIS_HOST=localhost
+redis-cli -h "$REDIS_HOST" -n "$REDIS_DB" "FLUSHDB"
 
 bash ../pdns/init_zone.sh 
 
