@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"net/http"
@@ -297,4 +298,42 @@ func getLivestreamStatisticsHandler(c echo.Context) error {
 		TotalReactions: totalReactions,
 		TotalReports:   totalReports,
 	})
+}
+
+// saveUserStastistics は元々 getUserStatisticsHandler にあったロジックで全ユーザーのスコアを計算して Redis に入れる
+func saveUserStatistics(ctx context.Context) error {
+	// ランク算出
+	var users []*UserModel
+	if err := dbConn.SelectContext(ctx, &users, "SELECT * FROM users"); err != nil {
+		return err
+	}
+
+	for _, user := range users {
+		var reactions int64
+		query := `
+		SELECT COUNT(*) FROM users u
+		INNER JOIN livestreams l ON l.user_id = u.id
+		INNER JOIN reactions r ON r.livestream_id = l.id
+		WHERE u.id = ?`
+		if err := dbConn.GetContext(ctx, &reactions, query, user.ID); err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return err
+		}
+
+		var tips int64
+		query = `
+		SELECT IFNULL(SUM(l2.tip), 0) FROM users u
+		INNER JOIN livestreams l ON l.user_id = u.id
+		INNER JOIN livecomments l2 ON l2.livestream_id = l.id
+		WHERE u.id = ?`
+		if err := dbConn.GetContext(ctx, &tips, query, user.ID); err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return err
+		}
+
+		score := reactions + tips
+		// XXX 本当は goroutine とかでいい感じに入れた方がいいと思う
+		if err := addScoreToUserImpl(ctx, user.ID, int(score)); err != nil {
+			return err
+		}
+	}
+	return nil
 }
