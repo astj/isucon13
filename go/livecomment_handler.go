@@ -250,7 +250,7 @@ func postLivecommentHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit: "+err.Error())
 	}
 
-	if err := addScoreToUser(ctx, livestreamModel.UserID, req.Tip); err != nil {
+	if err := addScoreToUser(ctx, livestreamModel.UserID, int(req.Tip)); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to add live streamer's score: "+err.Error())
 	}
 
@@ -420,7 +420,7 @@ func moderateHandler(c echo.Context) error {
 				return echo.NewHTTPError(http.StatusInternalServerError, "failed to get a number of old livecomments that hit spams: "+err.Error())
 			}
 			if n > 0 {
-				if err := addScoreToUser(ctx, userID, -1*(n+livecomment.Tip)); err != nil {
+				if err := addScoreToUser(ctx, userID, int(-1*(n+livecomment.Tip))); err != nil {
 					return echo.NewHTTPError(http.StatusInternalServerError, "failed to subtract a livestreamer's score: "+err.Error())
 				}
 			}
