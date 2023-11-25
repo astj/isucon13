@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"os"
 	"strconv"
 
@@ -26,10 +27,24 @@ func connectRedis(logger echo.Logger) *redis.Client {
 	})
 }
 
+const scoreKey = "UserRanking"
+
 func addScoreToUser(userID string, score int) error {
 	return nil
 }
 
+func addScoreToUserImpl(ctx context.Context, userID string, score int) error {
+	return redisClient.ZAdd(ctx, scoreKey, &redis.Z{Score: float64(score), Member: userID}).Err()
+}
+
 func getRankOfUser(userID string) (int, error) {
 	return 0, nil
+}
+
+func getRankOfUserImpl(ctx context.Context, userID string) (int, error) {
+	rank, err := redisClient.ZRank(ctx, scoreKey, userID).Result()
+	if err != nil {
+		return 0, err
+	}
+	return int(rank), err
 }
