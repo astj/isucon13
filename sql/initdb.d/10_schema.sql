@@ -15,7 +15,7 @@ CREATE TABLE `icons` (
   `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `user_name` VARCHAR(255) NOT NULL,
   `image` LONGBLOB NOT NULL,
-  `hash` BINARY(32) NOT NULL,
+  `sha256` BINARY(32) NOT NULL,
   KEY `icons_user_name` (`user_name`)
 ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
 

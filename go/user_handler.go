@@ -141,7 +141,7 @@ func postIconHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to delete old user icon: "+err.Error())
 	}
 
-	rs, err := tx.ExecContext(ctx, "INSERT INTO icons (user_name, image, hash) VALUES (?, ?, ?)", userName, req.Image, iconHash)
+	rs, err := tx.ExecContext(ctx, "INSERT INTO icons (user_name, image, sha256) VALUES (?, ?, ?)", userName, req.Image, iconHash)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert new user icon: "+err.Error())
 	}
@@ -405,7 +405,7 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 	}
 
 	var iconHash []byte
-	if err := tx.GetContext(ctx, &iconHash, "SELECT hash FROM icons WHERE user_name = ?", userModel.Name); err != nil {
+	if err := tx.GetContext(ctx, &iconHash, "SELECT sha256 FROM icons WHERE user_name = ?", userModel.Name); err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			return User{}, err
 		}
