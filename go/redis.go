@@ -49,7 +49,7 @@ func userIconHashKey(userName string) string {
 }
 
 func setUserIconSha256(ctx context.Context, userName string, sha256 string) error {
-	return redisClient.Set(ctx, userIconHashKey(userName), sha256, 1*time.Minute).Err()
+	return redisClient.Set(ctx, userIconHashKey(userName), sha256, 5*time.Minute).Err()
 }
 
 func getUserIconSha256(ctx context.Context, userName string) (string, error) {
