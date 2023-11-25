@@ -27,12 +27,12 @@ func connectRedis(logger echo.Logger) *redis.Client {
 
 const scoreKey = "UserRanking"
 
-func addScoreToUser(ctx context.Context, userID int64, score int) error {
-	return redisClient.ZAdd(ctx, scoreKey, &redis.Z{Score: float64(score), Member: userID}).Err()
+func addScoreToUser(ctx context.Context, userName string, score int) error {
+	return redisClient.ZAdd(ctx, scoreKey, &redis.Z{Score: float64(score), Member: userName}).Err()
 }
 
-func getRankOfUser(ctx context.Context, userID int64) (int, error) {
-	rank, err := redisClient.ZRevRank(ctx, scoreKey, strconv.FormatInt(userID, 10)).Result()
+func getRankOfUser(ctx context.Context, userName string) (int, error) {
+	rank, err := redisClient.ZRevRank(ctx, scoreKey, userName).Result()
 	if err != nil {
 		return 0, err
 	}
