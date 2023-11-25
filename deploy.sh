@@ -1,7 +1,7 @@
 set -xue
 
 cd /home/isucon/webapp/go
-#sudo -u isucon git pull origin main
+sudo -u isucon git pull origin main
 systemctl stop isupipe-go.service
 sudo -u isucon bash -c 'source ~/.profile && make build'
 systemctl restart isupipe-go.service
