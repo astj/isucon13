@@ -1,0 +1,3 @@
+-- 野蛮
+DROP DATABASE IF EXISTS `isupipe`;
+CREATE DATABASE IF NOT EXISTS `isupipe`;
