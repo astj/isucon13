@@ -28,7 +28,7 @@ func connectRedis(logger echo.Logger) *redis.Client {
 const scoreKey = "UserRanking"
 
 func addScoreToUser(ctx context.Context, userName string, score int) error {
-	return redisClient.ZAdd(ctx, scoreKey, &redis.Z{Score: float64(score), Member: userName}).Err()
+	return redisClient.ZIncrBy(ctx, scoreKey, float64(score), userName).Err()
 }
 
 func getRankOfUser(ctx context.Context, userName string) (int, error) {
