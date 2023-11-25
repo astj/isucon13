@@ -4,6 +4,7 @@ package main
 // sqlx的な参考: https://jmoiron.github.io/sqlx/
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net"
@@ -119,6 +120,7 @@ func initializeHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to calc userStatistics: "+err.Error())
 	}
 
+	// NOTE: 起動時に読むようにしたから不要かも？
 	if err := saveTags(c.Request().Context()); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to cache tags: "+err.Error())
 	}
@@ -211,6 +213,11 @@ func main() {
 		os.Exit(1)
 	}
 	powerDNSSubdomainAddress = subdomainAddr
+
+	if err := saveTags(context.Background()); err != nil {
+		e.Logger.Errorf("failed to load tags: %v", err)
+		os.Exit(1)
+	}
 
 	// HTTPサーバ起動
 	listenAddr := net.JoinHostPort("", strconv.Itoa(listenPort))
