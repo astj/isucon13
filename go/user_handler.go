@@ -100,6 +100,19 @@ func getIconHandler(c echo.Context) error {
 
 	username := c.Param("username")
 
+	if reqHash := c.Request().Header.Get("If-None-Match"); reqHash != "" {
+		var iconHash []byte
+		if err := dbConn.GetContext(ctx, &iconHash, "SELECT sha256 FROM icons WHERE user_name = ?", username); err != nil {
+			if !errors.Is(err, sql.ErrNoRows) {
+				return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user icon: "+err.Error())
+			}
+		}
+
+		if fmt.Sprintf("%x", iconHash) == reqHash {
+			return c.NoContent(http.StatusNotModified)
+		}
+	}
+
 	var image []byte
 	if err := dbConn.GetContext(ctx, &image, "SELECT image FROM icons WHERE user_name = ?", username); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
