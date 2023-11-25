@@ -25,3 +25,11 @@ func connectRedis(logger echo.Logger) *redis.Client {
 		DB:       int(redisDB),
 	})
 }
+
+func addScoreToUser(userID string, score int) error {
+	return nil
+}
+
+func getRankOfUser(userID string) (int, error) {
+	return 0, nil
+}
