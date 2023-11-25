@@ -1,6 +1,6 @@
 set -xue
 
-cd /home/isucon/webapp
+cd /home/isucon/webapp/go
 sudo -u isucon git pull origin main
 systemctl stop isupipe-go.service
 sudo -u isucon make build
