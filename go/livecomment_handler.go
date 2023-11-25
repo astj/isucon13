@@ -250,6 +250,10 @@ func postLivecommentHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit: "+err.Error())
 	}
 
+	if err := addScoreToUser(ctx, livestreamModel.UserID, req.Tip); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to add live streamer's score: "+err.Error())
+	}
+
 	return c.JSON(http.StatusCreated, livecomment)
 }
 
