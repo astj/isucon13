@@ -22,6 +22,7 @@ func saveTags(ctx context.Context) error {
 	if err := dbConn.SelectContext(ctx, &tagModels, "SELECT * FROM tags"); err != nil {
 		return err
 	}
+	Tags = make([]*Tag, 0, 200)
 	TagMap = make(map[int64]string)
 	InvTagMap = make(map[string]int64)
 
