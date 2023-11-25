@@ -97,8 +97,8 @@ type PostIconResponse struct {
 }
 
 type getImage struct {
-	image  []byte `db:"image"`
-	sha256 string `db:"sha256"`
+	Image  []byte `db:"image"`
+	Sha256 string `db:"sha256"`
 }
 
 func getIconHandler(c echo.Context) error {
@@ -119,7 +119,7 @@ func getIconHandler(c echo.Context) error {
 		}
 	}
 
-	var image getImage
+	image := getImage{}
 	if err := dbConn.GetContext(ctx, &image, "SELECT sha256, image FROM icons WHERE user_name = ?", username); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return c.Blob(http.StatusOK, "image/jpeg", fallbackImage)
@@ -128,8 +128,8 @@ func getIconHandler(c echo.Context) error {
 		}
 	}
 
-	c.Response().Header().Add("ETag", image.sha256)
-	return c.Blob(http.StatusOK, "image/jpeg", image.image)
+	c.Response().Header().Add("ETag", image.Sha256)
+	return c.Blob(http.StatusOK, "image/jpeg", image.Image)
 }
 
 func postIconHandler(c echo.Context) error {
