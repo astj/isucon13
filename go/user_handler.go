@@ -47,6 +47,7 @@ type UserModel struct {
 	DisplayName    string `db:"display_name"`
 	Description    string `db:"description"`
 	HashedPassword string `db:"password"`
+	DarkMode       bool   `db:"dark_mode"`
 }
 
 type User struct {
@@ -254,26 +255,17 @@ func registerHandler(c echo.Context) error {
 		DisplayName:    req.DisplayName,
 		Description:    req.Description,
 		HashedPassword: string(hashedPassword),
+		DarkMode:       req.Theme.DarkMode,
 	}
 
-	result, err := tx.NamedExecContext(ctx, "INSERT INTO users (name, display_name, description, password) VALUES(:name, :display_name, :description, :password)", userModel)
+	result, err := tx.NamedExecContext(ctx, "INSERT INTO users (name, display_name, description, password, dark_mode) VALUES(:name, :display_name, :description, :password, :dark_mode)", userModel)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert user: "+err.Error())
 	}
 
-	userID, err := result.LastInsertId()
+	_, err = result.LastInsertId()
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get last inserted user id: "+err.Error())
-	}
-
-	userModel.ID = userID
-
-	themeModel := ThemeModel{
-		UserID:   userID,
-		DarkMode: req.Theme.DarkMode,
-	}
-	if _, err := tx.NamedExecContext(ctx, "INSERT INTO themes (user_id, dark_mode) VALUES(:user_id, :dark_mode)", themeModel); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert user theme: "+err.Error())
 	}
 
 	// chaya2z
@@ -422,11 +414,6 @@ func verifyUserSession(c echo.Context) error {
 }
 
 func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (User, error) {
-	themeModel := ThemeModel{}
-	if err := tx.GetContext(ctx, &themeModel, "SELECT * FROM themes WHERE user_id = ?", userModel.ID); err != nil {
-		return User{}, err
-	}
-
 	iconHash, err := getUserIconSha256(ctx, userModel.Name)
 	if err != nil {
 		if !errors.Is(err, redis.Nil) {
@@ -441,8 +428,8 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 		DisplayName: userModel.DisplayName,
 		Description: userModel.Description,
 		Theme: Theme{
-			ID:       themeModel.ID,
-			DarkMode: themeModel.DarkMode,
+			ID:       userModel.ID,
+			DarkMode: userModel.DarkMode,
 		},
 		IconHash: iconHash,
 	}
