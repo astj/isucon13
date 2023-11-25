@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"strconv"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
@@ -30,6 +31,7 @@ const (
 var (
 	powerDNSSubdomainAddress string
 	dbConn                   *sqlx.DB
+	redisClient              *redis.Client
 	secret                   = []byte("isucon13_session_cookiestore_defaultsecret")
 )
 
@@ -193,6 +195,7 @@ func main() {
 	}
 	defer conn.Close()
 	dbConn = conn
+	redisClient = connectRedis(e.Logger)
 
 	subdomainAddr, ok := os.LookupEnv(powerDNSSubdomainAddressEnvKey)
 	if !ok {
