@@ -32,9 +32,10 @@ func addScoreToUser(ctx context.Context, userID int64, score int) error {
 }
 
 func getRankOfUser(ctx context.Context, userID int64) (int, error) {
-	rank, err := redisClient.ZRank(ctx, scoreKey, strconv.FormatInt(userID, 10)).Result()
+	rank, err := redisClient.ZRevRank(ctx, scoreKey, strconv.FormatInt(userID, 10)).Result()
 	if err != nil {
 		return 0, err
 	}
-	return int(rank), err
+	// revrank は 0 が最小なので +1 する
+	return int(rank) + 1, err
 }
