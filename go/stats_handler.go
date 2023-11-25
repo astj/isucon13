@@ -87,7 +87,7 @@ func getUserStatisticsHandler(c echo.Context) error {
 		}
 	}
 
-	rank, err := getRankOfUser(ctx, user.ID)
+	rank, err := getRankOfUser(ctx, user.Name)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user's rank: "+err.Error())
 	}
@@ -291,7 +291,7 @@ func saveUserStatistics(ctx context.Context) error {
 
 		score := reactions + tips
 		// XXX 本当は goroutine とかでいい感じに入れた方がいいと思う
-		if err := addScoreToUser(ctx, user.ID, int(score)); err != nil {
+		if err := addScoreToUser(ctx, user.Name, int(score)); err != nil {
 			return err
 		}
 	}

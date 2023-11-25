@@ -139,7 +139,7 @@ func postReactionHandler(c echo.Context) error {
 	}
 
 	// トランザクションが成功した後に書き込む。
-	if err := addScoreToUser(ctx, reaction.Livestream.Owner.ID, 1); err != nil {
+	if err := addScoreToUser(ctx, reaction.Livestream.Owner.Name, 1); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to add one to streamer's score: "+err.Error())
 	}
 
