@@ -1,12 +1,34 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 )
+
+var TagMap map[int64]string
+var InvTagMap map[string]int64
+var Tags []*Tag
+
+func saveTags(ctx context.Context) error {
+	var tagModels []TagModel
+	if err := dbConn.SelectContext(ctx, &tagModels, "SELECT * FROM tags"); err != nil {
+		return err
+	}
+
+	for _, tag := range tagModels {
+		TagMap[tag.ID] = tag.Name
+		InvTagMap[tag.Name] = tag.ID
+		Tags = append(Tags, &Tag{
+			ID:   tag.ID,
+			Name: tag.Name,
+		})
+	}
+	return nil
+}
 
 type Tag struct {
 	ID   int64  `json:"id"`
@@ -23,32 +45,8 @@ type TagsResponse struct {
 }
 
 func getTagHandler(c echo.Context) error {
-	ctx := c.Request().Context()
-
-	tx, err := dbConn.BeginTxx(ctx, nil)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to begin new transaction: : "+err.Error()+err.Error())
-	}
-	defer tx.Rollback()
-
-	var tagModels []*TagModel
-	if err := tx.SelectContext(ctx, &tagModels, "SELECT * FROM tags"); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get tags: "+err.Error())
-	}
-
-	if err := tx.Commit(); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit: "+err.Error())
-	}
-
-	tags := make([]*Tag, len(tagModels))
-	for i := range tagModels {
-		tags[i] = &Tag{
-			ID:   tagModels[i].ID,
-			Name: tagModels[i].Name,
-		}
-	}
 	return c.JSON(http.StatusOK, &TagsResponse{
-		Tags: tags,
+		Tags: Tags,
 	})
 }
 
