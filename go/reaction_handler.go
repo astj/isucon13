@@ -138,6 +138,11 @@ func postReactionHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit: "+err.Error())
 	}
 
+	// トランザクションが成功した後に書き込む。
+	if err := addScoreToUser(ctx, reaction.Livestream.Owner.ID, 1); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to add one to streamer's score: "+err.Error())
+	}
+
 	return c.JSON(http.StatusCreated, reaction)
 }
 
