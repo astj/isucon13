@@ -14,6 +14,10 @@ var InvTagMap map[string]int64
 var Tags []*Tag
 
 func saveTags(ctx context.Context) error {
+	clear(TagMap)
+	clear(InvTagMap)
+	clear(Tags)
+
 	var tagModels []TagModel
 	if err := dbConn.SelectContext(ctx, &tagModels, "SELECT * FROM tags"); err != nil {
 		return err
