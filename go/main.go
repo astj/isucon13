@@ -119,6 +119,10 @@ func initializeHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to calc userStatistics: "+err.Error())
 	}
 
+	if err := saveTags(c.Request().Context()); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to cache tags: "+err.Error())
+	}
+
 	c.Request().Header.Add("Content-Type", "application/json;charset=utf-8")
 	return c.JSON(http.StatusOK, InitializeResponse{
 		Language: "golang",
