@@ -31,13 +31,13 @@ const (
 var (
 	fallbackImagePath = "../img/NoImage.jpg"
 	fallbackImage     []byte
-	fallbackImageHash [32]byte
+	fallbackImageHash string
 	fallbackImageErr  error
 )
 
 func init() {
 	fallbackImage, fallbackImageErr = os.ReadFile(fallbackImagePath)
-	fallbackImageHash = sha256.Sum256(fallbackImage)
+	fallbackImageHash = fmt.Sprintf("%x", sha256.Sum256(fallbackImage))
 }
 
 type UserModel struct {
@@ -101,14 +101,14 @@ func getIconHandler(c echo.Context) error {
 	username := c.Param("username")
 
 	if reqHash := c.Request().Header.Get("If-None-Match"); reqHash != "" {
-		var iconHash []byte
+		var iconHash string
 		if err := dbConn.GetContext(ctx, &iconHash, "SELECT sha256 FROM icons WHERE user_name = ?", username); err != nil {
 			if !errors.Is(err, sql.ErrNoRows) {
 				return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user icon: "+err.Error())
 			}
 		}
 
-		if fmt.Sprintf("%x", iconHash) == reqHash {
+		if iconHash == reqHash {
 			return c.NoContent(http.StatusNotModified)
 		}
 	}
@@ -142,7 +142,7 @@ func postIconHandler(c echo.Context) error {
 	if err := json.NewDecoder(c.Request().Body).Decode(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "failed to decode the request body as json")
 	}
-	iconHash := sha256.Sum256(req.Image)
+	iconHash := fmt.Sprintf("%x", sha256.Sum256(req.Image))
 
 	tx, err := dbConn.BeginTxx(ctx, nil)
 	if err != nil {
@@ -417,7 +417,7 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 		return User{}, err
 	}
 
-	var iconHash []byte
+	var iconHash string
 	if err := tx.GetContext(ctx, &iconHash, "SELECT sha256 FROM icons WHERE user_name = ?", userModel.Name); err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			return User{}, err
@@ -425,7 +425,7 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 		if err != fallbackImageErr {
 			return User{}, fallbackImageErr
 		}
-		iconHash = fallbackImageHash[:]
+		iconHash = fallbackImageHash
 	}
 
 	user := User{
@@ -437,7 +437,7 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 			ID:       themeModel.ID,
 			DarkMode: themeModel.DarkMode,
 		},
-		IconHash: fmt.Sprintf("%x", iconHash),
+		IconHash: iconHash,
 	}
 
 	return user, nil
